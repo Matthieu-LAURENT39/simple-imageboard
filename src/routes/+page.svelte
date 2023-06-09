@@ -12,6 +12,7 @@
 	// We only want to start showing image after the rest of the page has loaded
 	let loading = true;
 	let submitting = false;
+	let fileInput;
 
 	const authorizedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
 	let size = 25;
@@ -70,6 +71,20 @@
 </script>
 
 <svelte:window on:keydown={on_key_down} />
+<svelte:body
+	on:dragover={(event) => {
+		event.preventDefault();
+	}}
+	on:drop={(event) => {
+		event.preventDefault();
+
+		var draggedFiles = event.dataTransfer.files;
+		if (draggedFiles.length > 0) {
+			fileInput.files = draggedFiles;
+			uploadImageAvailable = true;
+		}
+	}}
+/>
 
 <svelte:head>
 	<meta property="og:type" value="website" />
@@ -78,6 +93,16 @@
 </svelte:head>
 
 <body>
+	<!-- {#if hoveringWithDrag}
+		<div
+			class="vh-100 vw-100 bg-primary text-center"
+			style="position: fixed; top: 0; left: 0; z-index: 10; opacity: 0.95;"
+		>
+			<h1 class="text-white display-1 position-absolute top-50 start-50 translate-middle">
+				Drop your file here!
+			</h1>
+		</div>
+	{/if} -->
 	<!-- Top header -->
 	<header class="text-center py-3 mb-3 border-bottom" style="overflow:hidden;">
 		<div class="row">
@@ -133,6 +158,7 @@
 						</div> -->
 								<div class="col">
 									<input
+										bind:this={fileInput}
 										bind:files
 										type="file"
 										id="file"
