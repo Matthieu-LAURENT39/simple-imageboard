@@ -1,6 +1,8 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { error } from '@sveltejs/kit';
+import sharp from "sharp";
+
 import config from '../config.js';
 
 const folder = `./static/${config.uploadFolder}`;
@@ -16,6 +18,18 @@ export async function load({ params }) {
     };
 }
 
+async function validateImage(buffer) {
+    try {
+        const image = sharp(buffer);
+        await image.metadata();
+        return true;
+    } catch (err) {
+        console.log(err)
+        return false;
+    }
+}
+
+
 export const actions = {
     upload: async ({ request, route, url }) => {
         if (!config.uploadEnabled) {
@@ -23,11 +37,15 @@ export const actions = {
         }
 
         var filename;
-        try {
-            const data = Object.fromEntries(await request.formData());
-            filename = `${Date.now()}.${data.image.type.split('/')[1]}`;
-            const filePath = path.join(folder, filename);
+        const data = Object.fromEntries(await request.formData());
+        filename = `${Date.now()}.${data.image.type.split('/')[1]}`;
+        const filePath = path.join(folder, filename);
 
+        if (!await validateImage(await data.image.arrayBuffer())) {
+            throw error(415, "Not an image!")
+        }
+
+        try {
             fs.mkdir(folder, { recursive: true }, function (err) {
                 if (err) throw err;
             }).then(await fs.writeFile(filePath, Buffer.from(await data.image.arrayBuffer())));
