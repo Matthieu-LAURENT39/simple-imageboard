@@ -35,10 +35,8 @@ export const actions = {
             throw error(403, "Uploads are disabled")
         }
 
-
         var filename;
         const data = Object.fromEntries(await request.formData());
-        console.log(data.image)
         filename = `${Date.now()}.${data.image.type.split('/')[1]}`;
         const filePath = path.join(folder, filename);
         const thumbFilePath = path.join(thumbFolder, filename);

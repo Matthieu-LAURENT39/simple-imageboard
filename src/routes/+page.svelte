@@ -20,9 +20,7 @@
 	let editingPage = false;
 	$: pageEditValue = currentPage;
 
-	const imagesPerPage = 25;
-	// delay in ms of how long to wait between each fetching of new pics
-	const refreshEvery = 10 * 1000;
+	const imagesPerPage = config.imagesPerPage;
 
 	function getImagesForPage(all_images, pageNumber) {
 		const startIndex = (pageNumber - 1) * imagesPerPage;
@@ -41,7 +39,7 @@
 
 		const interval = setInterval(() => {
 			invalidateAll();
-		}, refreshEvery);
+		}, config.refreshEvery);
 
 		return () => {
 			clearInterval(interval);
@@ -89,6 +87,7 @@
 <svelte:window on:keydown={on_key_down} />
 
 <svelte:head>
+	<title>{config.appName}</title>
 	<meta property="og:type" value="website" />
 	<meta property="og:title" value={config.appName} />
 	<meta property="og:description" value="Currently hosting {data.images.length} images" />
@@ -96,7 +95,7 @@
 
 <body>
 	<!-- Top header -->
-	<header class="text-center py-3 mb-3 border-bottom" style="overflow:hidden;">
+	<header class="text-center pt-2 pb-3 mb-3 border-bottom" style="overflow:hidden;">
 		<div class="row">
 			<!-- User controls -->
 			<div class="col ms-3 mt-3">
@@ -218,12 +217,12 @@
 	</div>
 
 	<style>
-		img {
-			transition: all 0.2s ease-in-out;
+		/* img {
+			transition: 0.2s ease-in-out;
 		}
 		img:hover {
 			transform: scale(1.05);
-		}
+		} */
 	</style>
 	<!-- Image display -->
 	<div
