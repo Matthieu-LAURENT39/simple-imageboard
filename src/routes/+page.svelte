@@ -17,6 +17,9 @@
 	let size = 25;
 	let currentPage = 1;
 
+	let editingPage = false;
+	$: pageEditValue = currentPage;
+
 	const imagesPerPage = 25;
 	// delay in ms of how long to wait between each fetching of new pics
 	const refreshEvery = 10 * 1000;
@@ -46,10 +49,13 @@
 	});
 
 	function jumpPage(page) {
-		if (page < 1 || totalPages < page) {
-			return;
+		if (page < 1) {
+			currentPage = 1;
+		} else if (totalPages < page) {
+			currentPage = totalPages;
+		} else {
+			currentPage = page;
 		}
-		currentPage = page;
 	}
 
 	function on_key_down(event) {
@@ -66,6 +72,17 @@
 				jumpPage(currentPage + 1);
 				break;
 		}
+	}
+
+	function startEdit(node) {
+		node.focus();
+		node.select();
+	}
+
+	function handlePageInput(event) {
+		jumpPage(event.target.value);
+		pageEditValue = currentPage;
+		editingPage = false;
 	}
 </script>
 
@@ -174,7 +191,22 @@
 					>
 				</li>
 				<li class="page-item" aria-current="page">
-					<p class="page-link mb-0">{currentPage} / {totalPages}</p>
+					{#if editingPage}
+						<input
+							class="page-link mb-0"
+							type="number"
+							bind:value={pageEditValue}
+							on:change={handlePageInput}
+							on:focusout={handlePageInput}
+							min="1"
+							max={totalPages}
+							use:startEdit
+						/>
+					{:else}
+						<button class="page-link mb-0" on:click={() => (editingPage = true)}
+							>{currentPage} / {totalPages}
+						</button>
+					{/if}
 				</li>
 				<li class="page-item" class:disabled={loading || currentPage >= totalPages}>
 					<button id="btnNextPage" class="page-link" on:click={() => jumpPage(currentPage + 1)}
