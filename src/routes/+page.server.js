@@ -6,9 +6,16 @@ import sharp from "sharp";
 import config from '../config.js';
 
 const folder = `./static/${config.uploadFolder}`;
+const thumbFolder = `${folder}/thumb`;
 
 async function getImages() {
-    const files = await fs.readdir(folder);
+    // Make folder if it doesn't exist
+    await fs.mkdir(folder, { recursive: true }, function (err) {
+        if (err) throw err;
+    })
+
+    // Get all filenames and only files
+    const files = (await fs.readdir(folder, { withFileTypes: true })).filter(dirent => dirent.isFile()).map(dirent => dirent.name);
     return files.sort((a, b) => b.localeCompare(a));
 }
 
@@ -18,17 +25,9 @@ export async function load({ params }) {
     };
 }
 
-async function validateImage(buffer) {
-    try {
-        const image = sharp(buffer);
-        await image.metadata();
-        return true;
-    } catch (err) {
-        console.log(err)
-        return false;
-    }
+async function makeThumbnail(image) {
+    return await image.resize(config.thumbnailWidth);
 }
-
 
 export const actions = {
     upload: async ({ request, route, url }) => {
@@ -36,19 +35,42 @@ export const actions = {
             throw error(403, "Uploads are disabled")
         }
 
+
         var filename;
         const data = Object.fromEntries(await request.formData());
+        console.log(data.image)
         filename = `${Date.now()}.${data.image.type.split('/')[1]}`;
         const filePath = path.join(folder, filename);
+        const thumbFilePath = path.join(thumbFolder, filename);
 
-        if (!await validateImage(await data.image.arrayBuffer())) {
+
+        if (data.size > config.maxFileSize) {
+            throw error(413, "The image is too large!")
+        }
+
+        var image;
+        try {
+            image = sharp(await data.image.arrayBuffer());
+            await image.metadata();
+        } catch (err) {
             throw error(415, "Not an image!")
         }
 
+
         try {
+            // Save full-res
             fs.mkdir(folder, { recursive: true }, function (err) {
                 if (err) throw err;
-            }).then(await fs.writeFile(filePath, Buffer.from(await data.image.arrayBuffer())));
+            }).then(
+                await fs.writeFile(filePath, Buffer.from(await data.image.arrayBuffer()))
+            );
+
+            // Save thumbnail
+            fs.mkdir(thumbFolder, { recursive: true }, function (err) {
+                if (err) throw err;
+            }).then(
+                (await makeThumbnail(image)).toFile(thumbFilePath)
+            );
         } catch (err) {
             console.log(err);
             throw error(500, { err: err });

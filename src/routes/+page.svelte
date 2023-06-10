@@ -239,7 +239,7 @@
 					<img
 						in:fly|local={{ y: 20 }}
 						alt="User-uploaded content"
-						src={`${config.uploadFolder}/${filename}`}
+						src={`${config.uploadFolder}/thumb/${filename}`}
 						style="max-height: {size}vh; max-width: {size}vh;"
 						loading="lazy"
 						class="border border-black border-2 m-1"
